@@ -1,0 +1,52 @@
+name: ds4300-redis
+
+services:
+  redis:
+    image: redis:8.10
+    container_name: ds4300-redis
+    # AOF persistence so data survives `docker compose down` / restarts (wiped only by `down -v`).
+    command: ["redis-server", "--appendonly", "yes"]
+    ports:
+      - "127.0.0.1:6379:6379"
+    volumes:
+      - redis-data:/data
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 2s
+      timeout: 3s
+      retries: 15
+
+  # One-shot job: loads ./seed/seed.redis into an empty database, then exits.
+  seed:
+    image: redis:8.10
+    depends_on:
+      redis:
+        condition: service_healthy
+    volumes:
+      - ./seed:/seed:ro
+    entrypoint: ["sh", "/seed/load.sh"]
+    environment:
+      REDIS_HOST: redis
+      FORCE: ${FORCE:-0}
+    restart: "no"
+
+  redisinsight:
+    image: redis/redisinsight:latest
+    container_name: ds4300-redisinsight
+    depends_on:
+      redis:
+        condition: service_healthy
+    ports:
+      - "127.0.0.1:5540:5540"
+    environment:
+      RI_ACCEPT_TERMS_AND_CONDITIONS: "true"
+      # Preconfigured connection; uses the compose service name, not localhost.
+      RI_REDIS_HOST: redis
+      RI_REDIS_PORT: "6379"
+      RI_REDIS_ALIAS: "DS4300 ShopStream"
+    volumes:
+      - redisinsight-data:/data
+
+volumes:
+  redis-data:
+  redisinsight-data:
