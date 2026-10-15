@@ -1,5 +1,5 @@
 # DS4300 — Redis + Redis Insight Sandbox
-
+- add more notes later
 A local Redis 8 server, the Redis Insight GUI, and sample data for **ShopStream**, a made-up
 e-commerce web service. The data shows the things Redis usually does in front of a big data
 backend: caching API responses, sessions, counters, rate limits, leaderboards, approximate
